@@ -1,8 +1,27 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model StudentExercisesMVC.Models.ViewModels.CohortViewModel
+
+@{
+    ViewData["Title"] = "Cohorts";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<h2>@ViewData["Title"]</h2>
+
+<h4>Cohorts</h4>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th> Cohort Name </th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var cohort in Model.Cohorts)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => cohort.Name)
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

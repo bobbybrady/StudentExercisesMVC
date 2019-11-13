@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using StudentExercisesAPI.Models;
 using StudentExercisesMVC.Models;
 using StudentExercisesMVC.Models.ViewModels;
 

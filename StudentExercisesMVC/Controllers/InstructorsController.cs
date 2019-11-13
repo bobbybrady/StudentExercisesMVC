@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
-using StudentExercisesAPI.Models;
+using StudentExercisesMVC.Models;
 using StudentExercisesMVC.Models.ViewModels;
 
 namespace StudentExercisesMVC.Controllers
@@ -82,10 +82,10 @@ namespace StudentExercisesMVC.Controllers
                     cmd.Parameters.Add(new SqlParameter("@id", id));
                     SqlDataReader reader = cmd.ExecuteReader();
 
-                    Instructor ïnstructor = new Instructor();
+                    Instructor instructor = new Instructor();
                     while (reader.Read())
                     {
-                        ïnstructor = new Instructor
+                        instructor = new Instructor
                         {
                             Id = reader.GetInt32(reader.GetOrdinal("Id")),
                             FirstName = reader.GetString(reader.GetOrdinal("firstName")),
@@ -99,7 +99,7 @@ namespace StudentExercisesMVC.Controllers
 
                     reader.Close();
 
-                    return View(ïnstructor);
+                    return View(instructor);
                 }
             }
         }
@@ -162,17 +162,79 @@ namespace StudentExercisesMVC.Controllers
         // GET: Instructors/Edit/5
         public ActionResult Edit(int id)
         {
-            return View();
+            var viewModel = new InstructorCreateViewModel();
+            var cohorts = GetAllCohorts();
+            var selectItems = cohorts
+                .Select(cohort => new SelectListItem
+                {
+                    Text = cohort.Name,
+                    Value = cohort.Id.ToString()
+                })
+                .ToList();
+
+            selectItems.Insert(0, new SelectListItem
+            {
+                Text = "Choose cohort...",
+                Value = "0"
+            });
+            viewModel.Cohorts = selectItems;
+            using (SqlConnection conn = Connection)
+            {
+                conn.Open();
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = @"
+                               SELECT i.Id, i.firstName, i.lastName, i.slackHandle, i.speciality, i.cohortId
+                                 FROM Instructor i
+                                    WHERE @id = i.id
+                                         ";
+                    cmd.Parameters.Add(new SqlParameter("@id", id));
+                    SqlDataReader reader = cmd.ExecuteReader();
+
+                    Instructor instructor = new Instructor();
+                    while (reader.Read())
+                    {
+                        instructor = new Instructor
+                        {
+                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                            FirstName = reader.GetString(reader.GetOrdinal("firstName")),
+                            LastName = reader.GetString(reader.GetOrdinal("lastName")),
+                            SlackHandle = reader.GetString(reader.GetOrdinal("slackHandle")),
+                            Specialty = reader.GetString(reader.GetOrdinal("speciality")),
+                            CohortId = reader.GetInt32(reader.GetOrdinal("cohortId"))
+                        };
+                        viewModel.Instructor = instructor;
+                    }
+
+                    reader.Close();
+
+                }
+            }
+            return View(viewModel);
         }
 
         // POST: Instructors/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
+        public ActionResult Edit(int id, Instructor instructor)
         {
             try
             {
-                // TODO: Add update logic here
+                using (SqlConnection conn = Connection)
+                {
+                    conn.Open();
+                    using (SqlCommand cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = "Update Instructor set firstName = @firstName, lastName = @lastName, speciality = @speciality, cohortId = @cohortId, slackHandle = @slackHandle  where id = @id";
+                        cmd.Parameters.Add(new SqlParameter("@firstName", instructor.FirstName));
+                        cmd.Parameters.Add(new SqlParameter("@lastName", instructor.LastName));
+                        cmd.Parameters.Add(new SqlParameter("@speciality", instructor.Specialty));
+                        cmd.Parameters.Add(new SqlParameter("@cohortId", instructor.CohortId));
+                        cmd.Parameters.Add(new SqlParameter("@slackHandle", instructor.SlackHandle));
+                        cmd.Parameters.Add(new SqlParameter("@id", id));
+                        cmd.ExecuteNonQuery();
+                    }
+                }
 
                 return RedirectToAction(nameof(Index));
             }
